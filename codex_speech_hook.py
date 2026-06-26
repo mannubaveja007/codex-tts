@@ -2,13 +2,15 @@
 import sys
 import os
 import json
+import traceback
 import subprocess
 
 def main():
     try:
         # Codex pipes the response JSON object into stdin on turn completion
         payload = json.loads(sys.stdin.read())
-    except Exception:
+    except Exception as e:
+        log_error("Failed to parse stdin as JSON payload")
         return
 
     # Extract response text variations depending on Codex lifecycle versions
@@ -38,8 +40,17 @@ def main():
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL
         )
+    except Exception as e:
+        log_error(traceback.format_exc())
+
+def log_error(message):
+    try:
+        log_dir = os.path.expanduser("~/.codex")
+        os.makedirs(log_dir, exist_ok=True)
+        with open(os.path.join(log_dir, "tts_hook.log"), "a") as f:
+            f.write(f"{message}\n\n")
     except Exception:
-        pass # Suppress failures to avoid interrupting Codex CLI core processing loops
+        pass
 
 if __name__ == "__main__":
     main()
