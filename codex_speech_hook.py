@@ -5,6 +5,21 @@ import json
 import traceback
 import subprocess
 
+def find_voice(voice_name):
+    if not voice_name:
+        return None
+    try:
+        res = subprocess.run(["say", "-v", "?"], capture_output=True, text=True, check=True)
+        for line in res.stdout.splitlines():
+            parts = line.split()
+            if parts:
+                name = parts[0]
+                if name.lower() == voice_name.strip().lower():
+                    return name
+    except Exception:
+        pass
+    return voice_name
+
 def main():
     try:
         payload = json.loads(sys.stdin.read())
@@ -32,7 +47,7 @@ def main():
 
     try:
         rate = os.environ.get("TTS_SPEED", "185")
-        voice = os.environ.get("TTS_VOICE")
+        voice = find_voice(os.environ.get("TTS_VOICE"))
         
         cmd = ["say", "-r", rate]
         if voice:
