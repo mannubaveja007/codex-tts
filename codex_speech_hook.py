@@ -7,18 +7,15 @@ import subprocess
 
 def main():
     try:
-        # Codex pipes the response JSON object into stdin on turn completion
         payload = json.loads(sys.stdin.read())
     except Exception as e:
         log_error("Failed to parse stdin as JSON payload")
         return
 
-    # Extract response text variations depending on Codex lifecycle versions
     response_text = payload.get("text", payload.get("message", "")).strip()
     if not response_text:
         return
 
-    # Filter out code blocks to maintain clean speech fluidity
     clean_speech_lines = []
     in_code_block = False
     
@@ -34,9 +31,16 @@ def main():
         return
 
     try:
-        # Use macOS native 'say' command, running it asynchronously as a background process
+        rate = os.environ.get("TTS_SPEED", "185")
+        voice = os.environ.get("TTS_VOICE")
+        
+        cmd = ["say", "-r", rate]
+        if voice:
+            cmd.extend(["-v", voice])
+        cmd.append(text_to_stream)
+        
         subprocess.Popen(
-            ["say", text_to_stream],
+            cmd,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL
         )
